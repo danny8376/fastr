@@ -73,7 +73,7 @@ module Fastr
           Fastr::Plugin.load(self)
           load_app_classes
           setup_router
-          setup_watcher
+          setup_watcher unless RbConfig::CONFIG['host_os'] =~ /mswin|mingw/
 
           log.info "Application loaded successfully."
 
