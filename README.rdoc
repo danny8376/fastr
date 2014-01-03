@@ -21,8 +21,8 @@ You can see the latest API documentation here: http://rdoc.info/projects/chrismo
 
 == For Windows
 
-  add the following to your Gemfile
-  $gem 'win32-changenotify', :platforms => [:mswin, :mingw]
+add the following to your Gemfile
+  gem 'win32-changenotify', :platforms => [:mswin, :mingw]
 
 == Directory Structure
 
