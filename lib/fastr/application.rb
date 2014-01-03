@@ -1,6 +1,7 @@
 require 'logger'
 require 'cgi'
 require 'mime/types'
+require 'win32/changenotify' if Fastr.windows?
 
 module Fastr
   # This class represents a fastr application.
@@ -73,7 +74,7 @@ module Fastr
           Fastr::Plugin.load(self)
           load_app_classes
           setup_router
-          setup_watcher unless RbConfig::CONFIG['host_os'] =~ /mswin|mingw/
+          Fastr.windows? ? setup_watcher_win : setup_watcher
 
           log.info "Application loaded successfully."
 
@@ -135,11 +136,33 @@ module Fastr
         end
       end
     end
+    
+    # Watch for any file changes in the load paths.
+    def setup_watcher_win
+      this = self
+      Handler.send(:define_method, :app) do
+        this
+      end
+
+      @@load_paths.each do |name, path|
+        Dir["#{self.app_path}/#{path}"].each do |f|
+Win32::ChangeNotify.new(f, true, Win32::ChangeNotify::LAST_WRITE) do |cn|
+  cn.wait do |events|
+    events.each{ |event|
+      if event.action == 'modified'
+        WinFileWatch.new(event.file_name).file_modified
+      end
+    }
+  end
+end
+        end
+      end
+    end
 
     def config
       return self.settings
     end
-
+    
     module Handler
       def file_modified
         app.log.debug "Reloading file: #{path}"
@@ -158,6 +181,17 @@ module Fastr
 
       def reload_controller(name)
         Object.send(:remove_const, name.camelcase.to_sym)
+      end
+    end
+    
+    class WinFileWatch
+      include Handler
+      
+      def initialize(path)
+        @path = path
+      end
+      def path
+        @path
       end
     end
   end

@@ -1,3 +1,5 @@
+require 'win32/changenotify' if Fastr.windows?
+
 module Fastr
   # The router manages the routes for an application.
   #
@@ -27,7 +29,7 @@ module Fastr
       @app = app
       self.routes = []
       self.route_file = "#{@app.app_path}/app/config/routes.rb"
-      setup_watcher unless RbConfig::CONFIG['host_os'] =~ /mswin|mingw/
+      Fastr.windows? ? setup_watcher_win : setup_watcher
     end
     
     # Searches the routes for a match given a Rack env.
@@ -148,10 +150,38 @@ module Fastr
       EM.watch_file(self.route_file, Handler)
     end
     
+    def setup_watcher_win
+      this = self
+      Handler.send(:define_method, :router) do 
+        this
+      end
+      
+Win32::ChangeNotify.new(self.route_file, true, Win32::ChangeNotify::LAST_WRITE) do |cn|
+  cn.wait do |events|
+    events.each{ |event|
+      if event.action == 'modified'
+        WinFileWatch.new(event.file_name).file_modified
+      end
+    }
+  end
+end
+    end
+    
     module Handler
       def file_modified
         router.log.info "Routes changed, reloading."
         router.load
+      end
+    end
+    
+    class WinFileWatch
+      include Handler
+      
+      def initialize(path)
+        @path = path
+      end
+      def path
+        @path
       end
     end
   end

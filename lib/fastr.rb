@@ -2,6 +2,7 @@ module Fastr
   ROOT = File.expand_path(File.dirname(__FILE__))
   
   require "#{ROOT}/fastr/extensions/string"
+  require "#{ROOT}/fastr/extensions/windows_checker"
   
   autoload :Application,      "#{ROOT}/fastr/application"
   autoload :Log,              "#{ROOT}/fastr/logger"
