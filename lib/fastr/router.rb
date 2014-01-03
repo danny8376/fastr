@@ -27,7 +27,7 @@ module Fastr
       @app = app
       self.routes = []
       self.route_file = "#{@app.app_path}/app/config/routes.rb"
-      setup_watcher
+      setup_watcher unless RbConfig::CONFIG['host_os'] =~ /mswin|mingw/
     end
     
     # Searches the routes for a match given a Rack env.
