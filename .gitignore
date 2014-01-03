@@ -26,3 +26,7 @@ doc
 #*.gemspec
 *.rbc
 *.gemspec
+
+
+
+*.gem
